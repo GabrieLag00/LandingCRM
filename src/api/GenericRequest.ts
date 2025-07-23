@@ -3,7 +3,7 @@ import axios, { AxiosError, type AxiosInstance, type AxiosRequestConfig } from "
 import type { RequestOptions } from "@/types/RequestOptions";
 import type { ResponseHelper } from "@/types/ResponseHelper";
 
-const baseURL = import.meta.env.VITE_URL_API || "http://localhost:3000";
+const baseURL = import.meta.env.VITE_URL_API;
 
 const axiosInstance: AxiosInstance = axios.create({
   baseURL,
