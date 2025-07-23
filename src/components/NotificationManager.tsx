@@ -79,7 +79,7 @@ const NotificationManager: React.FC = () => {
     try {
       console.log(`🔄 Polling para nuevos leads desde ID: ${lastIdRef.current || "inicio"}`)
 
-      const response = await GetNewContacts(lastIdRef.current)
+      const response = await GetNewContacts(lastIdRef.current !== null ? lastIdRef.current : undefined)
 
       if (response?.status === 200 && Array.isArray(response.data)) {
         const newLeads = response.data.filter((lead: IContacto) => lead.id > (lastIdRef.current || 0))

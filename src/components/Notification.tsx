@@ -30,7 +30,7 @@ const Notification: React.FC<NotificationProps> = ({ message, onClose, index = 0
 
   return (
     <>
-      <style jsx>{`
+      <style>{`
         @keyframes slideInFromLeft {
           from {
             transform: translateX(-100%);
@@ -155,7 +155,7 @@ const Notification: React.FC<NotificationProps> = ({ message, onClose, index = 0
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full animate-pulse" />
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes progress {
           from { width: 100%; }
           to { width: 0%; }

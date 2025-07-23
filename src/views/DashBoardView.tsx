@@ -128,8 +128,7 @@ const Dashboard = () => {
     const matchesFilter = filterStatus === "" || lead.estado === filterStatus
     return matchesSearch && matchesFilter
   })
-
-  const chartData = processChartData(leads)
+  
   const totalLeads = leads.length
   const newLeads = leads.filter((lead) => lead.estado === "nuevo").length
   const contactedLeads = leads.filter((lead) => lead.estado === "contactado").length

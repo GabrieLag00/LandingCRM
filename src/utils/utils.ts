@@ -6,7 +6,7 @@ const baseURL = import.meta.env.VITE_URL_API || "http://localhost:3000";
 
 let currentTokens: TokenModel | null = null;
 
-export const updateTokens = (tokens: TokenModel) => {
+export const updateTokens = (tokens: TokenModel | null) => {
   currentTokens = tokens;
   localStorage.setItem("tokens", JSON.stringify(tokens));
 };
