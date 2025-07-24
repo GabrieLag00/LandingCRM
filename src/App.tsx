@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import HomeView from './views/HomeView';
 import LoginPage from './views/LoginView';
 import DashBoardView from './views/DashBoardView';
+import PrivacyView from './views/PrivacyView';
 
 function App() {
   
@@ -12,7 +13,7 @@ function App() {
           <Route path="/" element={<HomeView />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/dashboard" element={<DashBoardView />} />
-          {/* Aquí puedes agregar más rutas según sea necesario */}
+          <Route path="/privacy" element={<PrivacyView />} />
         </Routes>
       </BrowserRouter>
     </>
