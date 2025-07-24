@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { CheckCircle, ArrowRight, AlertCircle, User, Mail, MessageSquare, Sparkles, Send, X } from "lucide-react";
+import { CheckCircle, ArrowRight, AlertCircle, User, Mail, MessageSquare, Sparkles, Send, X, Lock } from "lucide-react";
 import { z } from "zod";
 import { PostContactos } from "@/api/services/contactService";
 import type { IContacto } from "@/types/Contacto";
@@ -20,6 +21,9 @@ const contactSchema = z.object({
   nombre: z.string().min(1, "El nombre completo es requerido"),
   email: z.string().email("Debe ser un correo electrónico válido"),
   mensaje: z.string().min(10, "El mensaje debe tener al menos 10 caracteres"),
+  termsAccepted: z.boolean().refine(val => val === true, {
+    message: "Debes aceptar los términos y condiciones para continuar"
+  }),
 });
 
 interface ContactForm {
@@ -27,6 +31,7 @@ interface ContactForm {
   email: string;
   mensaje: string;
   estado: "pendiente";
+  termsAccepted: boolean;
 }
 
 export default function ContactForm() {
@@ -37,8 +42,9 @@ const [formData, setFormData] = useState<ContactForm>({
   email: "",
   mensaje: "",
   estado: "pendiente",
+  termsAccepted: false,
 });
-const [errors, setErrors] = useState<{ nombre?: string; email?: string; mensaje?: string }>({});
+const [errors, setErrors] = useState<{ nombre?: string; email?: string; mensaje?: string; termsAccepted?: string }>({});
 const [isSubmitting, setIsSubmitting] = useState(false);
 const [submitted, setSubmitted] = useState(false);
 const [showAlert, setShowAlert] = useState(false);
@@ -124,12 +130,12 @@ const handleSubmit = async (e: React.FormEvent) => {
     console.error("Error en handleSubmit:", error);
 
     if (error instanceof z.ZodError) {
-      const newErrors: { nombre?: string; email?: string; mensaje?: string } = {};
+      const newErrors: { nombre?: string; email?: string; mensaje?: string; termsAccepted?: string } = {};
       error.issues.forEach((err) => {
         const field = err.path[0];
-        if (field === "nombre" || field === "email" || field === "mensaje") {
+        if (field === "nombre" || field === "email" || field === "mensaje" || field === "termsAccepted") {
           newErrors[field] = err.message;
-          showAnimatedAlert(`${field.charAt(0).toUpperCase() + field.slice(1)}: ${err.message}`, "error");
+          showAnimatedAlert(`${field === "termsAccepted" ? "Términos y condiciones" : field.charAt(0).toUpperCase() + field.slice(1)}: ${err.message}`, "error");
         }
       });
       setErrors(newErrors);
@@ -169,7 +175,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   }
 };
 
-  const validateField = (field: keyof ContactForm, value: string) => {
+  const validateField = (field: keyof Omit<ContactForm, "estado" | "termsAccepted">, value: string) => {
     try {
       contactSchema.pick({ [field]: true }).parse({ [field]: value });
       setErrors((prev) => ({ ...prev, [field]: undefined }));
@@ -190,12 +196,27 @@ const handleSubmit = async (e: React.FormEvent) => {
     console.log("Mostrando alerta:", { message, type });
   };
 
-  const handleInputChange = (field: keyof ContactForm, value: string) => {
+  const handleInputChange = (field: keyof ContactForm, value: string | boolean) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
-    validateField(field, value);
+    
+    // Validar solo si es un campo de string
+    if (typeof value === "string") {
+      validateField(field as keyof Omit<ContactForm, "estado" | "termsAccepted">, value);
+    } else if (field === "termsAccepted") {
+      // Validar checkbox específicamente
+      try {
+        contactSchema.pick({ termsAccepted: true }).parse({ termsAccepted: value });
+        setErrors((prev) => ({ ...prev, termsAccepted: undefined }));
+      } catch (error) {
+        if (error instanceof z.ZodError && Array.isArray(error.issues) && error.issues.length > 0) {
+          setErrors((prev) => ({ ...prev, termsAccepted: error.issues[0].message }));
+        }
+      }
+    }
+    
     if (submitted) setSubmitted(false);
     console.log("Cambio en campo:", { field, value });
   };
@@ -208,6 +229,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       email: "",
       mensaje: "",
       estado: "pendiente",
+      termsAccepted: false,
     });
     console.log("Formulario reseteado");
   };
@@ -342,15 +364,68 @@ const handleSubmit = async (e: React.FormEvent) => {
               )}
             </div>
 
+            {/* Términos y Condiciones */}
+            <div className="space-y-2">
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="termsAccepted"
+                  checked={formData.termsAccepted}
+                  onCheckedChange={(checked) => {
+                    const value = checked === true;
+                    handleInputChange("termsAccepted", value);
+                  }}
+                  className={`mt-1 ${
+                    errors.termsAccepted
+                      ? "border-red-500 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600 animate-shake"
+                      : ""
+                  }`}
+                />
+                <div className="flex-1">
+                  <Label 
+                    htmlFor="termsAccepted" 
+                    className="text-sm text-gray-300 leading-relaxed cursor-pointer"
+                  >
+                    Acepto los{" "}
+                    <button
+                      type="button"
+                      onClick={() => navigate("/privacy")}
+                      className="text-purple-400 hover:text-purple-300 underline transition-colors"
+                    >
+                      términos y condiciones
+                    </button>{" "}
+                    y la{" "}
+                    <button
+                      type="button"
+                      onClick={() => navigate("/privacy")}
+                      className="text-purple-400 hover:text-purple-300 underline transition-colors"
+                    >
+                      política de privacidad
+                    </button>
+                  </Label>
+                  {errors.termsAccepted && (
+                    <p className="text-red-400 text-xs mt-1 animate-slideInDown flex items-center">
+                      <AlertCircle className="w-3 h-3 mr-1" />
+                      {errors.termsAccepted}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold py-3 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-purple-500/25"
-              disabled={isSubmitting}
+              className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold py-3 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-purple-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              disabled={isSubmitting || !formData.termsAccepted}
             >
               {isSubmitting ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                   Enviando...
+                </>
+              ) : !formData.termsAccepted ? (
+                <>
+                  <Lock className="w-4 h-4 mr-2" />
+                  Acepta los términos para continuar
                 </>
               ) : (
                 <>
